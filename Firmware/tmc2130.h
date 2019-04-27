@@ -36,6 +36,12 @@ extern uint8_t tmc2130_home_fsteps[2];
 
 extern uint8_t tmc2130_wave_fac[4];
 
+// Extruder linearization curve
+extern uint32_t e_lin_curve [64];
+
+// Extruder microstep counter
+extern uint16_t e_mscnt;
+
 #pragma pack(push)
 #pragma pack(1)
 typedef struct
@@ -49,6 +55,27 @@ typedef struct
 #pragma pack(pop)
 
 extern tmc2130_chopper_config_t tmc2130_chopper_config[4];
+
+typedef struct
+{
+	uint8_t toff;
+	uint8_t hstrt;
+	uint8_t hend;
+	uint8_t fd3;
+	uint8_t disfdcc;
+	uint8_t rndtf;
+	uint8_t chm;
+	uint8_t tbl;
+	uint8_t sync;
+	uint8_t intpol;
+} tmc2130_E_chopper_config_t;
+
+extern tmc2130_E_chopper_config_t tmc2130_E_chopper_config;
+
+// Set stepper driver to direct current mode
+extern void tmc2130_set_direct_mode(uint8_t axis);
+// Set coil current in direct mode
+extern void tmc2130_set_direct_mode_current(uint8_t axis, int16_t coil_a_current, int16_t coil_b_current);
 
 //initialize tmc2130
 extern void tmc2130_init();
@@ -81,6 +108,8 @@ extern void tmc2130_print_currents();
 extern void tmc2130_set_pwm_ampl(uint8_t axis, uint8_t pwm_ampl);
 //set PWM_GRAD for any axis (M918)
 extern void tmc2130_set_pwm_grad(uint8_t axis, uint8_t pwm_ampl);
+
+extern void tmc2130_wr_CHOPCONF(uint8_t axis, uint8_t toff, uint8_t hstrt, uint8_t hend, uint8_t fd3, uint8_t disfdcc, uint8_t rndtf, uint8_t chm, uint8_t tbl, uint8_t vsense, uint8_t vhighfs, uint8_t vhighchm, uint8_t sync, uint8_t mres, uint8_t intpol, uint8_t dedge, uint8_t diss2g);
 
 
 extern uint16_t tmc2130_rd_MSCNT(uint8_t axis);

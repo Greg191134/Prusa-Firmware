@@ -10,6 +10,7 @@
 
 
 #define TMC2130_GCONF_NORMAL 0x00000000 // spreadCycle
+#define TMC2130_GCONF_DIRECT 0x00010000 // direct_mode (motor coil current)
 #define TMC2130_GCONF_SGSENS 0x00003180 // spreadCycle with stallguard (stall activates DIAG0 and DIAG1 [pushpull])
 #define TMC2130_GCONF_SILENT 0x00000004 // stealthChop
 
@@ -60,6 +61,115 @@ tmc2130_chopper_config_t tmc2130_chopper_config[4] = {
 	{TMC2130_TOFF_XYZ, 5, 1, 2, 0},
 	{TMC2130_TOFF_E, 5, 1, 2, 0}
 };
+
+// Extruder linearization curve (1023 steps)
+/*
+uint32_t e_lin_curve [64] = {
+	0x55155550,	0x55551555,	0x54555555,	0x55555555,	0x55555556,	0x56555559,	0x55955655,	0x65565565,
+	0x55655655,	0x65559556,	0x55556555,	0x65555556,	0x55555555,	0x55555555,	0x55555555,	0x55555555,
+	0x55555455,	0x55555555,	0x55555555,	0x56455555,	0x55555651,	0x55555555,	0x55555555,	0x55555555,
+	0x55555515,	0x54555555,	0x55155555,	0x55554555,	0x55155551,	0x54555455,	0x45555155,	0x55551555,
+	0x55155554,	0x55551555,	0x54555555,	0x55555555,	0x55555556,	0x56555559,	0x55955655,	0x65565565,
+	0x55655655,	0x65559556,	0x55556555,	0x65555556,	0x55555555,	0x55555555,	0x55555555,	0x55555555,
+	0x55555455,	0x55555555,	0x55555555,	0x56455555,	0x55555651,	0x55555555,	0x55555555,	0x55555555,
+	0x55555515,	0x54555555,	0x55155555,	0x55554555,	0x55155551,	0x54555455,	0x45555155,	0x55551555};
+*/
+
+// Success 1
+/*
+uint32_t e_lin_curve [64] = {
+	0x59559555,	0x95595595,	0x55955955,	0x55655565,	0x65555565,	0x64955555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555515,	0x55555555,	0x55515555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555555,	0x45555555,	0x15555555,	0x54555555,	0x55551555,	0x55455551,	0x55155515,
+	0x51555455,	0x55551555,	0x54555551,	0x54555555,	0x55555555,	0x55555555,	0x95555559,	0x55565555,
+	0x59559556,	0x95595595,	0x55955955,	0x55655565,	0x65555565,	0x64955555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555515,	0x55555555,	0x55515555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555555,	0x45555555,	0x15555555,	0x54555555,	0x55551555,	0x55455551,	0x55155515,
+	0x51555455,	0x55551555,	0x54555551,	0x54555555,	0x55555555,	0x55555555,	0x95555559,	0x95565555};
+*/
+// Amplitude 80 vs. 90
+/*
+uint32_t e_lin_curve [64] = {
+	0x55955655,	0x95565565,	0x56555955,	0x56555595,	0x55559555,	0x55556495,	0x55555555,	0x55555555,
+	0x55555555,	0x55555455,	0x55555555,	0x55545555,	0x55555555,	0x55555555,	0x55555555,	0x55595555,
+	0x55555555,	0x55555555,	0x55555455,	0x54555555,	0x55155555,	0x55551555,	0x55155551,	0x45555455,
+	0x55551555,	0x55455554,	0x55554555,	0x55555515,	0x55555555,	0x55555555,	0x55565555,	0x59555655,
+	0x55955655,	0x95565565,	0x56555955,	0x56555595,	0x55559555,	0x55556495,	0x55555555,	0x55555555,
+	0x55555555,	0x55555455,	0x55555555,	0x55545555,	0x55555555,	0x55555555,	0x55555555,	0x55595555,
+	0x55555555,	0x55555555,	0x55555455,	0x54555555,	0x55155555,	0x55551555,	0x55155551,	0x45555455,
+	0x55551555,	0x55455554,	0x55554555,	0x55555515,	0x55555555,	0x55555555,	0x55565555,	0x59555655};
+*/
+
+// "Optimized"
+/*
+uint32_t e_lin_curve [64] = {
+	0x56555655,	0x55655595,	0x55565559,	0x55565556,	0x65555565,	0x55555555,	0x55555559,	0x55555555,
+	0x55555555,	0x55555455,	0x55555555,	0x55555555,	0x55515555,	0x55555555,	0x55555555,	0x65555555,
+	0x55555455,	0x55555555,	0x55555555,	0x55555515,	0x55555455,	0x54555551,	0x55551555,	0x55155551,
+	0x15555155,	0x55455555,	0x55554555,	0x55554555,	0x55555555,	0x55555555,	0x55555955,	0x56555565,
+	0x56555655,	0x55655595,	0x55565559,	0x55565556,	0x65555565,	0x55555555,	0x55555559,	0x55555555,
+	0x55555555,	0x55555455,	0x55555555,	0x55555555,	0x55515555,	0x55555555,	0x55555555,	0x65555555,
+	0x55555455,	0x55555555,	0x55555555,	0x55555515,	0x55555455,	0x54555551,	0x55551555,	0x55155551,
+	0x15555155,	0x55455555,	0x55554555,	0x55554555,	0x55555555,	0x55555555,	0x55555955,	0x56555565};
+*/
+
+// From measurements v1
+/*
+uint32_t e_lin_curve [64] = {
+	0x95559555,	0x65559555,	0x59555955,	0x55559555,	0x56555565,	0x56555895,	0x95555565,	0x55555555,
+	0x55555555,	0x55545455,	0x56551555,	0x56555655,	0x55565555,	0x56555555,	0x55555555,	0x55555455,
+	0x55555555,	0x55555555,	0x55555555,	0x54555655,	0x54555555,	0x55555155,	0x56545555,	0x55515455,
+	0x55551545,	0x51554551,	0x52155455,	0x55555555,	0x55555555,	0x55565555,	0x59555565,	0x55556555,
+	0x55559595,	0x95655595,	0x95556555,	0x55556555,	0x55655559,	0x56555555,	0x54565595,	0x54555555,
+	0x55555456,	0x52455055,	0x56555455,	0x55555655,	0x54555456,	0x5A555555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555555,	0x56555155,	0x55551455,	0x55155455,	0x54555455,	0x51545554,	0x51155515,
+	0x51454545,	0x54451454,	0x54554545,	0x55555555,	0x55555555,	0x95555655,	0x95595555,	0x95656555};
+*/
+
+// From measurements v2
+/*
+uint32_t e_lin_curve [64] = {
+	0x95559555,	0x65559555,	0x59555955,	0x55559555,	0x56555565,	0x56555895,	0x95555565,	0x55555555,
+	0x55555555,	0x55545455,	0x56551555,	0x56555655,	0x55565555,	0x56555555,	0x55555555,	0x55555455,
+	0x55555555,	0x55555555,	0x55555555,	0x54555655,	0x54555555,	0x55555155,	0x56545555,	0x55515455,
+	0x55551545,	0x51554551,	0x52155455,	0x55555555,	0x55555555,	0x55565555,	0x59555565,	0x55556555,
+	0x55559595,	0x95655595,	0x95556555,	0x55556555,	0x55655559,	0x56555555,	0x54565595,	0x54555555,
+	0x55555456,	0x52455055,	0x56555455,	0x55555655,	0x54555456,	0x5A555555,	0x55555555,	0x55555555,
+	0x55555555,	0x55555555,	0x56555155,	0x55551455,	0x55155455,	0x50555455,	0x54545515,	0x15154551,
+	0x45515515,	0x54551545,	0x54555455,	0x55555555,	0x65555555,	0x55555555,	0x59555556,	0x65556555};
+*/
+
+// From measurements v3 (FFT)
+
+uint32_t e_lin_curve [64] = {
+    0x95565555,	0x59556555,	0x55655655,	0x55595559,	0x55955559,	0x55565555,	0x55555555,	0x55555556,
+    0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555655,	0x55595555,	0x55955555,
+    0x55555555,	0x55555865,	0x55555555,	0x55555455,	0x55555455,	0x54555515,	0x55554555,	0x55545554,
+    0x55455551,	0x45555515,	0x55515555,	0x55515555,	0x55555555,	0x95555555,	0x59555555,	0x65556555,
+    0x56555955,	0x95565565,	0x56555955,	0x55955595,	0x55556555,	0x55559495,	0x55555555,	0x55555555,
+    0x55545555,	0x55555555,	0x55155555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555595,
+    0x55555555,	0x55555455,	0x51555555,	0x54555555,	0x15554555,	0x15545555,	0x45551555,	0x54555155,
+    0x55155455,	0x55455545,	0x55455545,	0x55555455,	0x55555551,	0x55555555,	0x55555555,	0x95555655};
+
+
+
+// Extruder microstep counter
+uint16_t e_mscnt = 0;
+
+// Default chopper config for M919
+tmc2130_E_chopper_config_t tmc2130_E_chopper_config = {
+	TMC2130_TOFF_E, // toff
+	3, // hstrt / tfd;
+	3, // hend / offset;
+	0, // fd3;
+	0, // disfdcc;
+	0, // rndtf;
+	1, // chm;
+	2, // tbl;
+	0, // sync;
+	1  // intpol;
+};
+
 
 bool tmc2130_sg_stop_on_crash = true;
 uint8_t tmc2130_sg_diag_mask = 0x00;
@@ -123,6 +233,10 @@ void tmc2130_wr_PWMCONF(uint8_t axis, uint8_t pwm_ampl, uint8_t pwm_grad, uint8_
 void tmc2130_wr_TPWMTHRS(uint8_t axis, uint32_t val32);
 void tmc2130_wr_THIGH(uint8_t axis, uint32_t val32);
 
+void tmc2130_wr_MSLUT(uint8_t axis, uint8_t i, uint32_t val);
+void tmc2130_wr_MSLUTSEL(uint8_t axis, uint8_t x1, uint8_t x2, uint8_t x3, uint8_t w0, uint8_t w1, uint8_t w2, uint8_t w3);
+
+
 #define tmc2130_rd(axis, addr, rval) tmc2130_rx(axis, addr, rval)
 #define tmc2130_wr(axis, addr, wval) tmc2130_tx(axis, (addr) | 0x80, wval)
 
@@ -142,6 +256,20 @@ uint16_t __tcoolthrs(uint8_t axis)
 	}
 	return 0;
 }
+
+void tmc2130_set_direct_mode(uint8_t axis)
+{
+	tmc2130_wr(axis, TMC2130_REG_GCONF, TMC2130_GCONF_DIRECT);
+    printf_P(PSTR("Direct mode enabled for axis %d\n"), axis);
+}
+
+void tmc2130_set_direct_mode_current(uint8_t axis, int16_t coil_a_current, int16_t coil_b_current)
+{
+	uint32_t xdirect = (uint32_t)(coil_a_current & 0x1FF) | ((uint32_t)(coil_b_current & 0x1FF) << 16);
+	tmc2130_wr(axis, TMC2130_REG_XDIRECT, xdirect);
+	printf_P(PSTR("XDIRECT=%08lx (axis=%d coil_a=%d coil_b=%d)\n"), xdirect, axis, coil_a_current, coil_b_current);
+}
+
 
 void tmc2130_init()
 {
@@ -213,7 +341,8 @@ void tmc2130_init()
 	tmc2130_set_wave(Y_AXIS, 247, tmc2130_wave_fac[Y_AXIS]);
 	tmc2130_set_wave(Z_AXIS, 247, tmc2130_wave_fac[Z_AXIS]);
 #endif //TMC2130_LINEARITY_CORRECTION_XYZ
-	tmc2130_set_wave(E_AXIS, 247, tmc2130_wave_fac[E_AXIS]);
+//	tmc2130_set_wave(E_AXIS, 247, tmc2130_wave_fac[E_AXIS]);
+	tmc2130_set_wave(E_AXIS, 247, 100);
 #endif //TMC2130_LINEARITY_CORRECTION
 
 }
@@ -424,29 +553,30 @@ void tmc2130_setup_chopper(uint8_t axis, uint8_t mres, uint8_t current_h, uint8_
 	uint8_t fd3 = 0;
 	uint8_t rndtf = 0; //random off time
 	uint8_t chm = 0; //spreadCycle
+	uint8_t sync = 0; // ChopSync
 	uint8_t tbl = tmc2130_chopper_config[axis].tbl; //blanking time, original value = 2
 	if (axis == E_AXIS)
 	{
 #ifdef TMC2130_CNSTOFF_E
-		// fd = 0 (slow decay only)
 		hstrt = 0; //fd0..2
-		fd3 = 0; //fd3
-		hend = 0; //sine wave offset
-		chm = 1; // constant off time mod
+		fd3 = 1; //Slow decay only
+		hend = 3; //Sine wave offset
+		chm = 1; //Constant off time chopper mode
+//		sync = 13; // sync to 25kHz
+//		rndtf = 1; // Random Off Time
 #endif //TMC2130_CNSTOFF_E
 //		toff = TMC2130_TOFF_E; // toff = 3-5
-//		rndtf = 1;
 	}
 //	DBG(_n("tmc2130_setup_chopper(axis=%hhd, mres=%hhd, curh=%hhd, curr=%hhd\n"), axis, mres, current_h, current_r);
 //	DBG(_n(" toff=%hhd, hstr=%hhd, hend=%hhd, tbl=%hhd\n"), toff, hstrt, hend, tbl);
 	if (current_r <= 31)
 	{
-		tmc2130_wr_CHOPCONF(axis, toff, hstrt, hend, fd3, 0, rndtf, chm, tbl, 1, 0, 0, 0, mres, intpol, 0, 0);
+		tmc2130_wr_CHOPCONF(axis, toff, hstrt, hend, fd3, 0, rndtf, chm, tbl, 1, 0, 0, sync, mres, intpol, 0, 0);
 		tmc2130_wr(axis, TMC2130_REG_IHOLD_IRUN, 0x000f0000 | ((current_r & 0x1f) << 8) | (current_h & 0x1f));
 	}
 	else
 	{
-		tmc2130_wr_CHOPCONF(axis, toff, hstrt, hend, fd3, 0, rndtf, chm, tbl, 0, 0, 0, 0, mres, intpol, 0, 0);
+		tmc2130_wr_CHOPCONF(axis, toff, hstrt, hend, fd3, 0, rndtf, chm, tbl, 0, 0, 0, sync, mres, intpol, 0, 0);
 		tmc2130_wr(axis, TMC2130_REG_IHOLD_IRUN, 0x000f0000 | (((current_r >> 1) & 0x1f) << 8) | ((current_h >> 1) & 0x1f));
 	}
 }
@@ -519,7 +649,7 @@ void tmc2130_wr_MSLUTSTART(uint8_t axis, uint8_t start_sin, uint8_t start_sin90)
 	val |= (uint32_t)start_sin;
 	val |= ((uint32_t)start_sin90) << 16;
 	tmc2130_wr(axis, TMC2130_REG_MSLUTSTART, val);
-	//printf_P(PSTR("MSLUTSTART=%08lx (start_sin=%d start_sin90=%d)\n"), val, start_sin, start_sin90);
+	printf_P(PSTR("MSLUTSTART=%08lx (start_sin=%d start_sin90=%d)\n"), val, start_sin, start_sin90);
 }
 
 void tmc2130_wr_MSLUTSEL(uint8_t axis, uint8_t x1, uint8_t x2, uint8_t x3, uint8_t w0, uint8_t w1, uint8_t w2, uint8_t w3)
@@ -533,13 +663,13 @@ void tmc2130_wr_MSLUTSEL(uint8_t axis, uint8_t x1, uint8_t x2, uint8_t x3, uint8
 	val |= ((uint32_t)x2) << 16;
 	val |= ((uint32_t)x3) << 24;
 	tmc2130_wr(axis, TMC2130_REG_MSLUTSEL, val);
-	//printf_P(PSTR("MSLUTSEL=%08lx (x1=%d x2=%d x3=%d w0=%d w1=%d w2=%d w3=%d)\n"), val, x1, x2, x3, w0, w1, w2, w3);
+	printf_P(PSTR("MSLUTSEL=%08lx (x1=%d x2=%d x3=%d w0=%d w1=%d w2=%d w3=%d)\n"), val, x1, x2, x3, w0, w1, w2, w3);
 }
 
 void tmc2130_wr_MSLUT(uint8_t axis, uint8_t i, uint32_t val)
 {
 	tmc2130_wr(axis, TMC2130_REG_MSLUT0 + (i & 7), val);
-	//printf_P(PSTR("MSLUT[%d]=%08lx\n"), i, val);
+	printf_P(PSTR("MSLUT[%d]=%08lx\n"), i, val);
 }
 
 void tmc2130_wr_CHOPCONF(uint8_t axis, uint8_t toff, uint8_t hstrt, uint8_t hend, uint8_t fd3, uint8_t disfdcc, uint8_t rndtf, uint8_t chm, uint8_t tbl, uint8_t vsense, uint8_t vhighfs, uint8_t vhighchm, uint8_t sync, uint8_t mres, uint8_t intpol, uint8_t dedge, uint8_t diss2g)
@@ -815,6 +945,14 @@ void tmc2130_goto_step(uint8_t axis, uint8_t step, uint8_t dir, uint16_t delay_u
 		delayMicroseconds(delay_us);
 		mscnt = tmc2130_rd_MSCNT(axis);
 	}
+	e_mscnt = 0;
+	uint16_t v_mscnt = 0;
+
+	while (v_mscnt < mscnt ){
+		v_mscnt += (e_lin_curve[ e_mscnt >> 4 ] >> ((e_mscnt & 0xF) << 1)) & 0x3;
+		e_mscnt++;
+	}
+
 }
 
 void tmc2130_get_wave(uint8_t axis, uint8_t* data, FILE* stream)
@@ -853,7 +991,7 @@ void tmc2130_set_wave(uint8_t axis, uint8_t amp, uint8_t fac1000)
 	if (fac1000 > TMC2130_WAVE_FAC1000_MAX) fac1000 = TMC2130_WAVE_FAC1000_MAX;
 	float fac = 0;
 	if (fac1000) fac = ((float)((uint16_t)fac1000 + 1000) / 1000); //correction factor
-//	printf_P(PSTR(" factor: %s\n"), ftostr43(fac));
+	printf_P(PSTR("TMC wave factor: %s\n"), ftostr43(fac));
 	uint8_t vA = 0;                //value of currentA
 	uint8_t va = 0;                //previous vA
 	int8_t d0 = 0;                //delta0
@@ -921,6 +1059,7 @@ void tmc2130_set_wave(uint8_t axis, uint8_t amp, uint8_t fac1000)
 	}
 	tmc2130_wr_MSLUTSEL(axis, x[0], x[1], x[2], w[0], w[1], w[2], w[3]);
 }
+
 
 void bubblesort_uint8(uint8_t* data, uint8_t size, uint8_t* data2)
 {
