@@ -42,6 +42,9 @@ extern uint32_t e_lin_curve [64];
 // Extruder microstep counter
 extern uint16_t e_mscnt;
 
+// Extruder total steps counter
+extern int32_t e_steps_cnt;
+
 #pragma pack(push)
 #pragma pack(1)
 typedef struct

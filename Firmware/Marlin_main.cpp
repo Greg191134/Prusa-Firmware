@@ -3402,7 +3402,10 @@ void process_commands()
 				tmc2130_set_wave(axis, 247, fac);
 			}
 		}
-		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_DMCC_"), 9) == 0) //! TMC_SET_DMCC_
+		// Custom function TMC_SET_DMCC_E 0 247
+        // Set current in individual coild when TMC2130 are in direct mode (TMC_SET_DIRM_E)
+        // Current value is a signed 8 bit integer (-255/+255)
+        else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_DMCC_"), 9) == 0) //! TMC_SET_DMCC_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
 			int16_t coil_a_current = 0;
@@ -3421,6 +3424,9 @@ void process_commands()
 				tmc2130_set_direct_mode_current(axis, coil_a_current, coil_b_current);
 			}
 		}
+		// Custom function TMC_SET_DIRM_E
+        // Switch TMC2130 to direct mode where current in each coil can be directly specified
+        // Associated with TMC_SET_DMCC
 		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_DIRM_"), 9) == 0) //! TMC_SET_DIRM_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
@@ -3430,6 +3436,11 @@ void process_commands()
 				tmc2130_set_direct_mode(axis);
 			}
 		}
+		// Custom function TMC_SET_LINR_E 2 32
+        // Move to specified step in direct current mode using a sin wave current table (move is instantaneous)
+        // First parameter is step number
+        // Second parameter is division of a full step
+        // If no argument is given, advance by one step (using specified division)
 		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_LINR_"), 9) == 0) //! TMC_SET_LINR_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
@@ -3455,6 +3466,9 @@ void process_commands()
 				tmc2130_set_direct_mode_current(axis, coil_a_current, coil_b_current);
 			}
 		}
+        // Custom function TMC_SET_PHASE_E 103
+        // Sync the "phase" in the linearity correction curve/table to match TMC2130 µstep counter
+        // The "phase" is where you are currently in the curve/table [0-1023]
 		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_PHASE_"), 10) == 0) //! TMC_SET_PHASE_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 14);
@@ -3465,6 +3479,21 @@ void process_commands()
 				uint16_t mscnt1 = tmc2130_rd_MSCNT(axis);
 				e_mscnt = phase ;
 				printf_P(PSTR("mscnt1=%d phase=%d\n"), mscnt1, phase);
+			}
+		}
+        // Custom function TMC_SHF_PHASE_E +4
+        // Sync the "phase" in the linearity correction curve/table to match TMC2130 µstep counter
+        // The "phase" is where you are currently in the curve/table [0-1023]
+		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SHF_PHASE_"), 10) == 0) //! TMC_SET_PHASE_
+		{
+			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 14);
+			axis = (axis == 'E')?3:(axis - 'X');
+			if (axis < 4)
+			{
+				int8_t shift = (int8_t)strtol(CMDBUFFER_CURRENT_STRING + 15, NULL, 10);
+				e_mscnt += shift;
+                e_mscnt &= 0x3FF;
+				printf_P(PSTR("e_mscnt=%d shift=%d\n"), e_mscnt, shift);
 			}
 		}
 		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("SET_STEP_"), 9) == 0) //! TMC_SET_STEP_
@@ -3483,7 +3512,23 @@ void process_commands()
 				printf_P(PSTR("mscnt1=%d coil_a=%d coil_b=%d\n"), mscnt1, coil_a_current, coil_b_current);
 			}
 		}
-		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("DO_STEPS_"), 9) == 0) //! TMC_DO_STEPS_
+        // Custom function TMC_GET_STEP_E
+        // Display the cumulative number of µsteps executed by the stepper interrupt routine fo E since power on
+        // used for debugging purpose, counter is a signed int32
+		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("GET_STEP_"), 9) == 0) //! TMC_GET_STEP_
+		{
+			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
+			axis = (axis == 'E')?3:(axis - 'X');
+			if (axis < 4)
+			{
+				printf_P(PSTR("E step counter e_steps_cnt=%ld\n"), e_steps_cnt);
+			}
+		}
+        // Custom function  TMC_DO_STEPS_E -8
+        // Move specified axis by the given number of µsteps
+        // For extruder, extruding -> negative steps, retraction -> positive steps
+        // Used for measuring motor linearity
+        else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("DO_STEPS_"), 9) == 0) //! TMC_DO_STEPS_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
 			axis = (axis == 'E')?3:(axis - 'X');
@@ -3511,7 +3556,9 @@ void process_commands()
 				printf_P(PSTR("Steps=%d mscnt1=%d coil_a=%d coil_b=%d\n"), steps, mscnt1, coil_a_current, coil_b_current);
 			}
 		}
-		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("TEST_ADL_"), 9) == 0) //! TMC_SET_CHOP_
+        // Custom function TMC_TEST_ADL_E
+        // Used for debugging purpose to check advanced linearisation table lookup is working as excepted
+		else if (strncmp_P(CMDBUFFER_CURRENT_STRING + 4, PSTR("TEST_ADL_"), 9) == 0) //! TMC_TEST_ADL_
 		{
 			uint8_t axis = *(CMDBUFFER_CURRENT_STRING + 13);
 			axis = (axis == 'E')?3:(axis - 'X');

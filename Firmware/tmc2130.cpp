@@ -140,7 +140,7 @@ uint32_t e_lin_curve [64] = {
 */
 
 // From measurements v3 (FFT)
-
+/*
 uint32_t e_lin_curve [64] = {
     0x95565555,	0x59556555,	0x55655655,	0x55595559,	0x55955559,	0x55565555,	0x55555555,	0x55555556,
     0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555655,	0x55595555,	0x55955555,
@@ -150,11 +150,51 @@ uint32_t e_lin_curve [64] = {
     0x55545555,	0x55555555,	0x55155555,	0x55555555,	0x55555555,	0x55555555,	0x55555555,	0x55555595,
     0x55555555,	0x55555455,	0x51555555,	0x54555555,	0x15554555,	0x15545555,	0x45551555,	0x54555155,
     0x55155455,	0x55455545,	0x55455545,	0x55555455,	0x55555551,	0x55555555,	0x55555555,	0x95555655};
+*/
 
+// From measurements v3.1 (FFT)
+/*
+uint32_t e_lin_curve [64] = {
+    0x15555155,	0x51555555,	0x55555555,	0x55555555,	0x55655555,	0x95556555,	0x65559555,	0x55955955,
+    0x55595565,	0x55595559,	0x55555559,	0x55555556,	0x55555565,	0x55555555,	0x55555555,	0x55555555,
+    0x55555555,	0x55555555,	0x55555955,	0x65555555,	0x55555555,	0x55555556,	0x55565255,	0x55555555,
+    0x51555555,	0x55555555,	0x51555545,	0x55551555,	0x55455545,	0x54555515,	0x45555455,	0x55515555,
+    0x55555455,	0x55551555,	0x55555555,	0x55555955,	0x65555955,	0x59555955,	0x55655655,	0x59559556,
+    0x55655595,	0x62555595,	0x55595555,	0x55555555,	0x55555555,	0x55555555,	0x51555555,	0x55555555,
+    0x55555555,	0x55555554,	0x55555555,	0x55555555,	0x55555955,	0x55555555,	0x55555555,	0x55555155,
+    0x55455555,	0x55554555,	0x55155551,	0x55455545,	0x15545551,	0x45551555,	0x54555155,	0x54555455};
+*/
+
+// From Spline interpolated curve
+/*
+uint32_t e_lin_curve [64] = {
+    0x55545555,	0x54555554,	0x55555555,	0x59555555,	0x55565555,	0x95565559,	0x55955955,	0x56556556,
+    0x59559559,	0x55655595,	0x55595559,	0x58955559,	0x55595555,	0x55555555,	0x55555555,	0x54555555,
+    0x55555555,	0x55555555,	0x56555555,	0x55655555,	0x94955555,	0x55555555,	0x55555555,	0x54555555,
+    0x55555555,	0x55555555,	0x55455555,	0x55555555,	0x55555551,	0x54555554,	0x45555155,	0x45554555,
+    0x15554555,	0x55455555,	0x55555555,	0x55555555,	0x55555955,	0x55955565,	0x55595595,	0x56556556,
+    0x95565565,	0x56555955,	0x58955595,	0x55559555,	0x54595555,	0x55555456,	0x55555455,	0x54555515,
+    0x55555555,	0x55554645,	0x55555555,	0x56545655,	0x55555555,	0x56555555,	0x55555555,	0x94955555,
+    0x54565455,	0x51555555,	0x55155555,	0x54545545,	0x54545455,	0x54515451,	0x54545454,	0x15151454};
+*/
+
+// LDO Coolpower
+uint32_t e_lin_curve [64] = {
+0x55595555,	0x55556555,	0x55555555,	0x15555555,	0x55555555,	0x51555554,	0x55515555,	0x55554555,
+0x55555455,	0x55555555,	0x55555555,	0x55655555,	0x65556555,	0x65556555,	0x59555955,	0x55555955,
+0x55555556,	0x54595495,	0x55555555,	0x45555545,	0x55551555,	0x55515554,	0x55545551,	0x55515554,
+0x54555545,	0x55515555,	0x55555555,	0x55555555,	0x59555565,	0x56555955,	0x95595595,	0x56555955,
+0x55955595,	0x55559555,	0x55555555,	0x55555555,	0x55551555,	0x55551555,	0x55555155,	0x55555515,
+0x55555455,	0x55555555,	0x55555555,	0x65555559,	0x55565555,	0x55595559,	0x55595559,	0x55555565,
+0x55555559,	0x51555555,	0x51555555,	0x55545555,	0x55545554,	0x45551554,	0x54555155,	0x55455515,
+0x55455545,	0x55555455,	0x55555554,	0x55555555,	0x55655555,	0x95556555,	0x95559555,	0x95559555};
 
 
 // Extruder microstep counter
 uint16_t e_mscnt = 0;
+
+// Extruder total steps counter
+int32_t e_steps_cnt = 0;
 
 // Default chopper config for M919
 tmc2130_E_chopper_config_t tmc2130_E_chopper_config = {
@@ -342,7 +382,7 @@ void tmc2130_init()
 	tmc2130_set_wave(Z_AXIS, 247, tmc2130_wave_fac[Z_AXIS]);
 #endif //TMC2130_LINEARITY_CORRECTION_XYZ
 //	tmc2130_set_wave(E_AXIS, 247, tmc2130_wave_fac[E_AXIS]);
-	tmc2130_set_wave(E_AXIS, 247, 100);
+	tmc2130_set_wave(E_AXIS, 247, 000);
 #endif //TMC2130_LINEARITY_CORRECTION
 
 }
@@ -649,7 +689,7 @@ void tmc2130_wr_MSLUTSTART(uint8_t axis, uint8_t start_sin, uint8_t start_sin90)
 	val |= (uint32_t)start_sin;
 	val |= ((uint32_t)start_sin90) << 16;
 	tmc2130_wr(axis, TMC2130_REG_MSLUTSTART, val);
-	printf_P(PSTR("MSLUTSTART=%08lx (start_sin=%d start_sin90=%d)\n"), val, start_sin, start_sin90);
+	// printf_P(PSTR("MSLUTSTART=%08lx (start_sin=%d start_sin90=%d)\n"), val, start_sin, start_sin90);
 }
 
 void tmc2130_wr_MSLUTSEL(uint8_t axis, uint8_t x1, uint8_t x2, uint8_t x3, uint8_t w0, uint8_t w1, uint8_t w2, uint8_t w3)
@@ -663,13 +703,13 @@ void tmc2130_wr_MSLUTSEL(uint8_t axis, uint8_t x1, uint8_t x2, uint8_t x3, uint8
 	val |= ((uint32_t)x2) << 16;
 	val |= ((uint32_t)x3) << 24;
 	tmc2130_wr(axis, TMC2130_REG_MSLUTSEL, val);
-	printf_P(PSTR("MSLUTSEL=%08lx (x1=%d x2=%d x3=%d w0=%d w1=%d w2=%d w3=%d)\n"), val, x1, x2, x3, w0, w1, w2, w3);
+	// printf_P(PSTR("MSLUTSEL=%08lx (x1=%d x2=%d x3=%d w0=%d w1=%d w2=%d w3=%d)\n"), val, x1, x2, x3, w0, w1, w2, w3);
 }
 
 void tmc2130_wr_MSLUT(uint8_t axis, uint8_t i, uint32_t val)
 {
 	tmc2130_wr(axis, TMC2130_REG_MSLUT0 + (i & 7), val);
-	printf_P(PSTR("MSLUT[%d]=%08lx\n"), i, val);
+	//printf_P(PSTR("MSLUT[%d]=%08lx\n"), i, val);
 }
 
 void tmc2130_wr_CHOPCONF(uint8_t axis, uint8_t toff, uint8_t hstrt, uint8_t hend, uint8_t fd3, uint8_t disfdcc, uint8_t rndtf, uint8_t chm, uint8_t tbl, uint8_t vsense, uint8_t vhighfs, uint8_t vhighchm, uint8_t sync, uint8_t mres, uint8_t intpol, uint8_t dedge, uint8_t diss2g)
@@ -947,12 +987,10 @@ void tmc2130_goto_step(uint8_t axis, uint8_t step, uint8_t dir, uint16_t delay_u
 	}
 	e_mscnt = 0;
 	uint16_t v_mscnt = 0;
-
-	while (v_mscnt < mscnt ){
+    while (v_mscnt < mscnt ){
 		v_mscnt += (e_lin_curve[ e_mscnt >> 4 ] >> ((e_mscnt & 0xF) << 1)) & 0x3;
 		e_mscnt++;
 	}
-
 }
 
 void tmc2130_get_wave(uint8_t axis, uint8_t* data, FILE* stream)

@@ -788,13 +788,17 @@ void stepper_tick_lowres()
 	#ifndef ADVANCED_LINEARISATION
   		WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
 	#else
-
 	  //Advanced linearisation code
 	  // Table has 64 entries, each entry is 32 bits and cover 16 microsteps
-	  // e_table_location = e_mscnt >> 4; // Dive by 16
+	  // e_table_location = e_mscnt >> 4; // Dividee by 16
 	  // e_bits_location = (e_mscnt & 0xF); // position in int32 value
 	  // e_bits = (value >> ( e_bits_location << 1 )) & 0x3;  // isolate the 2 relevant bits
+      // coding assumes that you travel the table from low to high
+      // With TMC2130 you travel the table from high to low when extruding
   	  e_action = (e_lin_curve[ e_mscnt >> 4 ] >> ((e_mscnt & 0xF) << 1)) & 0x3;
+      if (count_direction[E_AXIS] > 0){
+          e_action = (e_action ^ 0x3) -1; // Positive extrusion -> travel μstep table from 1023 to 0 -> invert action (2->0, 0->2)
+      }
   	  if (e_action){ // 1st step pulse will be executed for e_action 1 and 2
   	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
   	  	  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
@@ -803,7 +807,8 @@ void stepper_tick_lowres()
   	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
   		  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
   	  }
-  	  e_mscnt += count_direction[E_AXIS];
+  	  e_steps_cnt += count_direction[E_AXIS];
+      e_mscnt -= count_direction[E_AXIS];
   	  e_mscnt &= 0x3FF; //contrains e_mscnt to 0 -> 1023
 
 	#endif // ADVANCED_LINEARISATION
@@ -876,20 +881,26 @@ void stepper_tick_highres()
   #else
 	  //Advanced linearisation code
 	  // Table has 64 entries, each entry is 32 bits and cover 16 microsteps
-	  // e_table_location = e_mscnt >> 4; // Dive by 16
+	  // e_table_location = e_mscnt >> 4; // Dividee by 16
 	  // e_bits_location = (e_mscnt & 0xF); // position in int32 value
 	  // e_bits = (value >> ( e_bits_location << 1 )) & 0x3;  // isolate the 2 relevant bits
-	  e_action = (e_lin_curve[ e_mscnt >> 4 ] >> ((e_mscnt & 0xF) << 1)) & 0x3;
-	  if (e_action){ // 1st step pulse will be executed for e_action 1 and 2
-	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
-	  	  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
-	  }
-	  if (e_action & 0x2){ // 2nd step pulse will be executed for e_action 2 only
-	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
-		  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
-	  }
-	  e_mscnt += count_direction[E_AXIS];
-	  e_mscnt &= 0x3FF; //contrains e_mscnt to 0 -> 1023
+      // coding assumes that you travel the table from low to high
+      // With TMC2130 you travel the table from high to low when extruding
+  	  e_action = (e_lin_curve[ e_mscnt >> 4 ] >> ((e_mscnt & 0xF) << 1)) & 0x3;
+      if (count_direction[E_AXIS] > 0){
+          e_action = (e_action ^ 0x3) -1; // Positive extrusion -> travel μstep table from 1023 to 0 -> invert action (2->0, 0->2)
+      }
+  	  if (e_action){ // 1st step pulse will be executed for e_action 1 and 2
+  	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+  	  	  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
+  	  }
+  	  if (e_action & 0x2){ // 2nd step pulse will be executed for e_action 2 only
+  	      WRITE(E0_STEP_PIN, !INVERT_E_STEP_PIN);
+  		  WRITE(E0_STEP_PIN, INVERT_E_STEP_PIN);
+  	  }
+  	  e_steps_cnt += count_direction[E_AXIS];
+  	  e_mscnt -= count_direction[E_AXIS];
+  	  e_mscnt &= 0x3FF; //contrains e_mscnt to 0 -> 1023
 
   #endif // ADVANCED_LINEARISATION
 
